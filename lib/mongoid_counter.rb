@@ -5,13 +5,22 @@ module Mongoid # :nodoc:
     extend ActiveSupport::Concern
 
     module ClassMethods
-      def has_counters(*syms)
+      def has_counters(*args)
         cattr_accessor :counters, :counters_options
 
-        self.counters_options = HashWithIndifferentAccess.new(syms.extract_options!)
-        self.counters = syms
+        self.counters_options = HashWithIndifferentAccess.new(args.extract_options!)
+        self.counters = args
 
         has_many :resource_counters, :as => :resource, :dependent => (counters_options[:dependent] || :delete)
+
+        args.each do |counter_name|
+          field :"cached_#{counter_name}", type: Integer
+        end
+        args.each do |field_name|
+          ::ResourceCounter.class_eval <<-FIELDS, __FILE__, __LINE__ + 1
+            field :#{field_name}, type: Integer
+          FIELDS
+        end
       end
     end
 
@@ -44,6 +53,5 @@ module Mongoid # :nodoc:
       end
 
     end
-
   end
 end
