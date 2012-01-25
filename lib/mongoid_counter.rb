@@ -28,10 +28,10 @@ module Mongoid # :nodoc:
 
       def add_count(sym, increment = 1)
         unless counters_options["#{sym}_method"]
-          if counter = resource_counters.where(:counter_name => sym.to_s).where(:created_at.gte => Time.now.beginning_of_day).first
+          if counter = resource_counters.where(:created_at.gte => Time.now.beginning_of_day).first
             counter.inc(sym, increment)
           else
-            resource_counters << ResourceCounter.new(:count => increment, :counter_name => sym.to_s)
+            resource_counters << ResourceCounter.new(sym => increment)
           end
         end
         self.inc("cached_#{sym}", increment)
@@ -45,7 +45,7 @@ module Mongoid # :nodoc:
             if method = counters_options["#{sym}_method"]
               self.send(method)
             else
-              resource_counters.only(:counter_name, :count).where(:counter_name => sym.to_s).sum(:count).to_i
+              resource_counters.sum(sym).to_i
             end || 0
           self.set("cached_#{sym}", fresh) if self.send("cached_#{sym}") != fresh
           fresh

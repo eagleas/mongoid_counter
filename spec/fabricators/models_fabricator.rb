@@ -5,8 +5,7 @@ end
 
 Fabricator :resource_counter do
   resource_type { 'Resource' }
-  counter_name { 'downloads' }
-  count { 5 }
-  created_at { Time.now.beginning_of_day }
+  downloads { 5 }
+  created_at { Time.now.yesterday.beginning_of_day }
 end
 
