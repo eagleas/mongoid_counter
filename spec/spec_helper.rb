@@ -6,7 +6,6 @@ require 'mongoid'
 Mongoid.configure do |config|
   logger = Logger.new('log/test.log')
   config.master = Mongo::Connection.new('localhost', 27017, logger: logger).db('mongoid_counter_test')
-  config.autocreate_indexes = true
   config.logger = logger
 end
 
