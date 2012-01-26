@@ -5,7 +5,7 @@ describe Resource do
   before(:each) do
     @p1 = Fabricate(:resource, :cached_downloads => 2)
     @p2 = Fabricate(:resource, :cached_downloads => 1, :cached_views => 1)
-    Fabricate(:resource_counter, :resource_id => @p1.id)
+    Fabricate :resource_counter, :resource => @p1
   end
 
   it "should respond to resource_counters" do
@@ -63,12 +63,15 @@ describe Resource do
   end
 
   it "should increase counter by 3 and create only one record" do
-    lambda{ 3.times { @p1.add_count(:views)}
-    }.should change{@p1.resource_counters(true).count}.from(1).to(2)
+    lambda{ 3.times {|x| 
+      @p1.add_count(:views)
+      @p1.reload.cached_views.should == x + 1
+    }
+    }.should change{@p1.resource_counters.count}.from(1).to(2)
   end
 
   it "should be able to redefine counter method and not use default mechanism of counters" do
-    expect{@p2.add_count(:samples, 3)}.to change(ResourceCounter, :count).by(0)
+    expect{@p2.add_count(:samples, 3)}.to change{@p2.resource_counters.count}.by(0)
     @p2.cached_samples.should == 3
     @p2.get_count(:samples).should == 3
     @p2.get_count(:samples, false).should == 999

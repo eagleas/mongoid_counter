@@ -11,7 +11,7 @@ module Mongoid # :nodoc:
         self.counters_options = HashWithIndifferentAccess.new(args.extract_options!)
         self.counters = args
 
-        has_many :resource_counters, :as => :resource, :dependent => (counters_options[:dependent] || :delete)
+        embeds_many :resource_counters, as: :resource, cascade_callbacks: true
 
         args.each do |counter_name|
           field :"cached_#{counter_name}", type: Integer
@@ -27,25 +27,30 @@ module Mongoid # :nodoc:
     module InstanceMethods
 
       def add_count(sym, increment = 1)
-        unless counters_options["#{sym}_method"]
-          if counter = resource_counters.where(:created_at.gte => Time.now.beginning_of_day).first
-            counter.inc(sym, increment)
+        if counters_options["#{sym}_method"]
+          self.inc("cached_#{sym}", increment)
+        else
+          self.send(:"cached_#{sym}=", (self["cached_#{sym}".to_sym] || 0) + increment)
+          counter = resource_counters.
+            where(:created_at.gte => Time.now.beginning_of_day, sym.gt => 0).first
+          if counter
+            counter.send(:"#{sym}=", (counter[sym] || 0) + increment)
           else
-            resource_counters << ResourceCounter.new(sym => increment)
+            resource_counters.build(sym => increment, created_at: Time.now)
           end
+          self.save(validate: false)
         end
-        self.inc("cached_#{sym}", increment)
       end
 
       def get_count(sym, cached = true)
         if cached
-          self.send("cached_#{sym}".to_sym) || get_count(sym, false)
+          self["cached_#{sym}".to_sym] || get_count(sym, false)
         else
           fresh = \
             if method = counters_options["#{sym}_method"]
               self.send(method)
             else
-              resource_counters.sum(sym).to_i
+              resource_counters.map(&sym).compact.reduce(:+)
             end || 0
           self.set("cached_#{sym}", fresh) if self.send("cached_#{sym}") != fresh
           fresh
