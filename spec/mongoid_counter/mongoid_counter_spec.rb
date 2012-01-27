@@ -3,79 +3,76 @@ require File.expand_path(File.join(File.dirname(__FILE__), '../spec_helper'))
 
 describe Resource do
   before(:each) do
-    @p1 = Fabricate(:resource, :cached_downloads => 2)
-    @p2 = Fabricate(:resource, :cached_downloads => 1, :cached_views => 1)
-    Fabricate :resource_counter, :resource => @p1
+    @pr = Fabricate :parent_resource
+    @r1 = Fabricate(:resource, cached_downloads: 2, parent_resource: @pr)
+    @r2 = Fabricate(:resource, cached_downloads: 1, cached_views: 1, parent_resource: @pr)
+    Fabricate :resource_counter, :resource => @r1
   end
 
   it "should respond to resource_counters" do
-    @p1.should respond_to(:resource_counters)
+    @r1.should respond_to(:resource_counters)
   end
 
   it "should respond to counters" do
-    @p1.should respond_to(:counters)
+    @r1.should respond_to(:counters)
   end
 
   it "should return counters" do
-    @p1.counters_options.should == { 'samples_method' => :calculate }
-    @p1.counters.should == [:views, :downloads, :samples]
+    @r1.counters_options.should == { 'samples_method' => :calculate }
+    @r1.counters.should == [:views, :downloads, :samples]
   end
 
   it "should respond to counter" do
-    @p1.should respond_to(:get_count)
+    @r1.should respond_to(:get_count)
   end
 
   it "should return 0 if counters == nil" do
-    @p1.get_count(:views).should == 0
-    @p1.get_count(:views, false).should == 0
+    @r1.get_count(:views).should == 0
+    @r1.get_count(:views, false).should == 0
   end
 
   it "should return downloads count from cached column" do
-    @p1.get_count(:downloads).should == 2
+    @r1.get_count(:downloads).should == 2
   end
 
-  it "should return downloads count" do
-    @p1.get_count(:downloads, false).should == 5
+  it "should return downloads count and recalculate value(not use cached column)" do
+    @r1.get_count(:downloads, false).should == 5
   end
-
-  it "should return downloads count and not use cached column" do
-    @p1.get_count(:downloads, false).should == 5
-  end
-
-  #it "should update cached column for downloads" do
-    #@p1.update_cached_column(:downloads)
-    #@p1.get_count(:downloads).should == 5
-  #end
 
   it "should increase counter by 1 for downloads" do
-    @p1.add_count(:downloads)
-    @p1.get_count(:downloads).should == 3
+    @r1.add_count(:downloads)
+    @r1.get_count(:downloads).should == 3
   end
 
   it "should increase counter by 3 for downloads" do
-    @p1.add_count(:downloads, 3).should_not be_nil
-    @p1.get_count(:downloads).should == 5
+    @r1.add_count(:downloads, 3).should_not be_nil
+    @r1.get_count(:downloads).should == 5
   end
 
   it "should increase counter by 3 for downloads" do
-    3.times { @p1.add_count(:downloads)}
-    @p1.get_count(:downloads).should == 5
+    3.times { @r1.add_count(:downloads)}
+    @r1.get_count(:downloads).should == 5
+  end
+
+  it "should update counter value on add_count for nested embeding" do
+    @r1.add_count(:downloads)
+    @r1.resource_counters.first.downloads.should == 6
   end
 
   it "should increase counter by 3 and create only one record" do
-    lambda{ 3.times {|x| 
-      @p1.add_count(:views)
-      @p1.reload.cached_views.should == x + 1
+    lambda{ 3.times {|x|
+      @r1.add_count(:views)
+      @r1.reload.cached_views.should == x + 1
     }
-    }.should change{@p1.resource_counters.count}.from(1).to(2)
+    }.should change{@r1.resource_counters.count}.from(1).to(2)
   end
 
   it "should be able to redefine counter method and not use default mechanism of counters" do
-    expect{@p2.add_count(:samples, 3)}.to change{@p2.resource_counters.count}.by(0)
-    @p2.cached_samples.should == 3
-    @p2.get_count(:samples).should == 3
-    @p2.get_count(:samples, false).should == 999
-    @p2.cached_samples.should == 999
+    expect{@r2.add_count(:samples, 3)}.to change{@r2.resource_counters.count}.by(0)
+    @r2.cached_samples.should == 3
+    @r2.get_count(:samples).should == 3
+    @r2.get_count(:samples, false).should == 999
+    @r2.cached_samples.should == 999
   end
 end
 

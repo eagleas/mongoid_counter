@@ -18,12 +18,7 @@ require 'rspec/autorun'
 require 'fabrication'
 
 models_folder = File.join(File.dirname(__FILE__), 'models')
-Dir[ File.join(models_folder, '*.rb') ].each { |file|
-  require file
-  file_name = File.basename(file).sub('.rb', '')
-  klass = file_name.classify.constantize
-  klass.collection.drop
-}
+Dir[ File.join(models_folder, '*.rb') ].each { |file| require file }
 
 require 'database_cleaner'
 RSpec.configure do |config|

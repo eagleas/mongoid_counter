@@ -1,11 +1,9 @@
 # -*- encoding : utf-8 -*-
-class Resource
+class ParentResource
   include Mongoid::Document
   include Mongoid::Counter
 
-  embedded_in :parent_resource
-
-  has_counters :views, :downloads, :samples, :samples_method => :calculate
+  embeds_many :resource
 
   private
   def calculate

@@ -11,7 +11,7 @@ module Mongoid # :nodoc:
         self.counters_options = HashWithIndifferentAccess.new(args.extract_options!)
         self.counters = args
 
-        embeds_many :resource_counters, as: :resource, cascade_callbacks: true
+        embeds_many :resource_counters, as: :resource
 
         args.each do |counter_name|
           field :"cached_#{counter_name}", type: Integer
@@ -38,7 +38,7 @@ module Mongoid # :nodoc:
           else
             resource_counters.build(sym => increment, created_at: Time.now)
           end
-          self.save(validate: false)
+          save(validate: false)
         end
       end
 
