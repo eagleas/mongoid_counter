@@ -28,11 +28,11 @@ module Mongoid # :nodoc:
 
       def add_count(sym, increment = 1)
         if counters_options["#{sym}_method"]
-          self.inc("cached_#{sym}", increment)
+          self.inc(:"cached_#{sym}", increment)
         else
-          self.send(:"cached_#{sym}=", (self["cached_#{sym}".to_sym] || 0) + increment)
+          self.send(:"cached_#{sym}=", (self[:"cached_#{sym}"] || 0) + increment)
           counter = resource_counters.
-            where(:created_at.gte => Time.now.beginning_of_day, sym.gt => 0).first
+            where(:created_at.gte => Time.now.beginning_of_day).first
           if counter
             counter.send(:"#{sym}=", (counter[sym] || 0) + increment)
           else

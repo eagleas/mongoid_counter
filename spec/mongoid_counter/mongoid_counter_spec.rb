@@ -74,5 +74,10 @@ describe Resource do
     @r2.get_count(:samples, false).should == 999
     @r2.cached_samples.should == 999
   end
+
+  it "shoulg not add ResourceCounter" do
+    expect{@r1.add_count(:views)}.to change{@r1.resource_counters.count}.by(0)
+  end
+
 end
 
