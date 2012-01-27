@@ -14,7 +14,7 @@ module Mongoid # :nodoc:
         embeds_many :resource_counters, as: :resource
 
         args.each do |counter_name|
-          field :"cached_#{counter_name}", type: Integer
+          field "cached_#{counter_name}", type: Integer
         end
         args.each do |field_name|
           ::ResourceCounter.class_eval <<-FIELDS, __FILE__, __LINE__ + 1
@@ -28,16 +28,16 @@ module Mongoid # :nodoc:
 
       def add_count(sym, increment = 1)
         if counters_options["#{sym}_method"]
-          self.inc(:"cached_#{sym}", increment)
+          inc("cached_#{sym}", increment)
         else
           counter = resource_counters.
-            where(:created_at.gte => Time.now.beginning_of_day).first
+            where(:created_at.gte => Time.now.utc.beginning_of_day).first
           if counter
-            self.send(:"cached_#{sym}=", (self[:"cached_#{sym}"] || 0) + increment)
-            counter.send(:"#{sym}=", (counter[sym] || 0) + increment)
+            send("cached_#{sym}=", (self["cached_#{sym}"] || 0) + increment)
+            counter.send("#{sym}=", (counter[sym] || 0) + increment)
             save(validate: false)
           else
-            inc(:"cached_#{sym}", increment)
+            inc("cached_#{sym}", increment)
             resource_counters.create(sym => increment, created_at: Time.now)
           end
         end
@@ -49,11 +49,11 @@ module Mongoid # :nodoc:
         else
           fresh = \
             if method = counters_options["#{sym}_method"]
-              self.send(method)
+              send(method)
             else
               resource_counters.map(&sym).compact.reduce(:+)
             end || 0
-          self.set("cached_#{sym}", fresh) if self.send("cached_#{sym}") != fresh
+          set("cached_#{sym}", fresh) if self.send("cached_#{sym}") != fresh
           fresh
         end
       end
