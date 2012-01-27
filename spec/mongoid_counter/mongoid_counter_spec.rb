@@ -60,11 +60,11 @@ describe Resource do
   end
 
   it "should increase counter by 3 and create only one record" do
-    lambda{ 3.times {|x|
-      @r1.add_count(:views)
-      @r1.reload.cached_views.should == x + 1
-    }
-    }.should change{@r1.resource_counters.count}.from(1).to(2)
+    lambda{ 3.times { |x|
+        @r1.add_count(:views)
+        @r1.reload.cached_views.should == x + 1
+      }
+    }.should change{@r1.resource_counters.count}.by(0)
   end
 
   it "should be able to redefine counter method and not use default mechanism of counters" do
