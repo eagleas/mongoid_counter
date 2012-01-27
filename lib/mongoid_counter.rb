@@ -30,15 +30,16 @@ module Mongoid # :nodoc:
         if counters_options["#{sym}_method"]
           self.inc(:"cached_#{sym}", increment)
         else
-          self.send(:"cached_#{sym}=", (self[:"cached_#{sym}"] || 0) + increment)
           counter = resource_counters.
             where(:created_at.gte => Time.now.beginning_of_day).first
           if counter
+            self.send(:"cached_#{sym}=", (self[:"cached_#{sym}"] || 0) + increment)
             counter.send(:"#{sym}=", (counter[sym] || 0) + increment)
+            save(validate: false)
           else
-            resource_counters.build(sym => increment, created_at: Time.now)
+            inc(:"cached_#{sym}", increment)
+            resource_counters.create(sym => increment, created_at: Time.now)
           end
-          save(validate: false)
         end
       end
 
