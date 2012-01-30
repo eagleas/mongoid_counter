@@ -31,32 +31,24 @@ describe Resource do
     @r1.get_count(:views, false).should == 0
   end
 
-  it "should return downloads count from cached column" do
+  it "should increase counter by 3 for downloads at once" do
     @r1.get_count(:downloads).should == 2
-  end
-
-  it "should return downloads count and recalculate value(not use cached column)" do
-    @r1.get_count(:downloads, false).should == 5
-  end
-
-  it "should increase counter by 1 for downloads" do
-    @r1.add_count(:downloads)
-    @r1.get_count(:downloads).should == 3
-  end
-
-  it "should increase counter by 3 for downloads" do
-    @r1.add_count(:downloads, 3).should_not be_nil
+    @r1.add_count(:downloads, 3)
+    @r1.cached_downloads.should == 5
     @r1.get_count(:downloads).should == 5
+    @r1.get_count(:downloads, false).should == 8
   end
 
   it "should increase counter by 3 for downloads" do
+    @r1.get_count(:downloads).should == 2
     3.times { @r1.add_count(:downloads)}
     @r1.get_count(:downloads).should == 5
+    @r1.get_count(:downloads, false).should == 8
   end
 
   it "should update counter value on add_count for nested embeding" do
     @r1.add_count(:downloads)
-    @r1.resource_counters.first.downloads.should == 6
+    @r1.resource_counters.last.downloads.should == 1
   end
 
   it "should increase counter by 3 and create only one record" do
@@ -64,7 +56,7 @@ describe Resource do
         @r1.add_count(:views)
         @r1.reload.cached_views.should == x + 1
       }
-    }.should change{@r1.resource_counters.count}.by(0)
+    }.should change{@r1.resource_counters.count}.by(1)
   end
 
   it "should be able to redefine counter method and not use default mechanism of counters" do
@@ -76,7 +68,7 @@ describe Resource do
   end
 
   it "shoulg not add ResourceCounter" do
-    expect{@r1.add_count(:views)}.to change{@r1.resource_counters.count}.by(0)
+    expect{@r1.add_count(:views)}.to change{@r1.resource_counters.count}.by(1)
   end
 
 end

@@ -35,11 +35,13 @@ module Mongoid # :nodoc:
           if counter
             send("cached_#{sym}=", (self["cached_#{sym}"] || 0) + increment)
             counter.send("#{sym}=", (counter[sym] || 0) + increment)
-            save(validate: false)
           else
-            inc("cached_#{sym}", increment)
+            send("cached_#{sym}=", (self["cached_#{sym}"] || 0) + increment)
+            #WTF? resource_counter below is available for update ONLY after parent instance is saved
+            #due to this case we can't use #inc for updating cached_column
             resource_counters.create(sym => increment, created_at: Time.now)
           end
+          timeless.save!(validate: false)
         end
       end
 
