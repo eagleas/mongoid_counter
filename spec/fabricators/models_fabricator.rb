@@ -5,7 +5,7 @@ Fabricator :resource do
 end
 
 Fabricator :resource_counter do
+  id { BSON::ObjectId.from_time(1.day.ago.utc) }
   downloads { 5 }
-  created_at { 1.day.ago.utc }
 end
 
