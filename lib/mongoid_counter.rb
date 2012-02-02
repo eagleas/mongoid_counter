@@ -33,9 +33,6 @@ module Mongoid # :nodoc:
       else
         time = Time.now.utc.beginning_of_day
         counter = resource_counters.detect {|c| c.id.generation_time >= time }
-        #counters = resource_counters.desc(:_id).limit(1)
-        #counter = counters.first
-        #if counter.id.generation_time >= Time.now.utc.beginning_of_day
         if counter
           send("cached_#{sym}=", (self["cached_#{sym}"] || 0) + increment)
           counter.send("#{sym}=", (counter[sym] || 0) + increment)
