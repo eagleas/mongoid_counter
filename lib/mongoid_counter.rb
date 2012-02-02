@@ -31,11 +31,11 @@ module Mongoid # :nodoc:
       if counters_options["#{sym}_method"]
         inc("cached_#{sym}", increment)
       else
-        counter = resource_counters.detect do |c|
-          c.id.generation_time >= Time.now.utc.beginning_of_day
-        end
-        #time_id = BSON::ObjectId.from_time(Time.now.utc.beginning_of_day)
-        #counter = resource_counters.where({'_id' => {'$gte' => time_id}}).first
+        time = Time.now.utc.beginning_of_day
+        counter = resource_counters.detect {|c| c.id.generation_time >= time }
+        #counters = resource_counters.desc(:_id).limit(1)
+        #counter = counters.first
+        #if counter.id.generation_time >= Time.now.utc.beginning_of_day
         if counter
           send("cached_#{sym}=", (self["cached_#{sym}"] || 0) + increment)
           counter.send("#{sym}=", (counter[sym] || 0) + increment)
