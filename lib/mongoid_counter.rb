@@ -11,7 +11,7 @@ module Mongoid # :nodoc:
         self.counters_options = HashWithIndifferentAccess.new(args.extract_options!)
         self.counters = args
 
-        embeds_many :resource_counters, as: :resource
+        has_many :resource_counters, as: :resource
 
         args.each do |counter_name|
           field "cached_#{counter_name}", type: Integer
@@ -31,18 +31,17 @@ module Mongoid # :nodoc:
       if counters_options["#{sym}_method"]
         inc("cached_#{sym}", increment)
       else
-        time = Time.now.utc.beginning_of_day
-        counter = resource_counters.detect {|c| c.id.generation_time >= time }
-        if counter
+        counter = resource_counters.where().desc(:_id).limit(1).to_a[0]
+        if counter && counter.id.generation_time >= Time.now.utc.beginning_of_day
           send("cached_#{sym}=", (self["cached_#{sym}"] || 0) + increment)
-          counter.send("#{sym}=", (counter[sym] || 0) + increment)
+          counter.inc(sym, increment)
         else
           send("cached_#{sym}=", (self["cached_#{sym}"] || 0) + increment)
           #WTF? resource_counter below is available for update ONLY after parent instance is saved
           #due to this case we can't use #inc for updating cached_column
           resource_counters.create(sym => increment)
         end
-        timeless.save!(validate: false)
+        save!(validate: false)
       end
     end
 
@@ -54,7 +53,7 @@ module Mongoid # :nodoc:
           if method = counters_options["#{sym}_method"]
             send(method)
         else
-          resource_counters.map(&sym).compact.reduce(:+)
+          resource_counters.sum(sym).to_i
         end || 0
         set("cached_#{sym}", fresh) if self.send("cached_#{sym}") != fresh
         fresh

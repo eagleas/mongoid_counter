@@ -3,7 +3,7 @@ class ParentResource
   include Mongoid::Document
   include Mongoid::Counter
 
-  embeds_many :resource
+  has_many :resource
 
   private
   def calculate

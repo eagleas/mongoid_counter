@@ -3,7 +3,7 @@ class Resource
   include Mongoid::Document
   include Mongoid::Counter
 
-  embedded_in :parent_resource
+  belongs_to :parent_resource
 
   has_counters :views, :downloads, :samples, :samples_method => :calculate
 
