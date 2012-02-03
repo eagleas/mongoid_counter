@@ -25,11 +25,12 @@ module Mongoid # :nodoc:
         date = Time.now.utc.to_date.to_time.to_i.to_s
         if cnt[date]
           inc("cnt.#{date}.#{sym}", increment)
+          cnt[date][sym.to_s] += increment
         else
           set("cnt.#{date}", {sym => increment}) # NON thread safe!
+          cnt[date] = { sym.to_s => increment }
         end
         inc("cached_#{sym}", increment)
-        reload                      # <---- potentially bottleneck
       end
     end
 

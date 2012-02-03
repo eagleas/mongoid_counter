@@ -3,8 +3,9 @@ require File.expand_path(File.join(File.dirname(__FILE__), '../spec_helper'))
 
 describe Resource do
   before(:each) do
+    yesterday_str = Time.now.utc.yesterday.to_date.to_time.to_i.to_s
     @pr = Fabricate :parent_resource
-    @r1 = Fabricate(:resource, cached_downloads: 2, parent_resource: @pr, :cnt => {Time.now.utc.yesterday.to_date.to_time.to_i.to_s => {:downloads => 5}} )
+    @r1 = Fabricate(:resource, cached_downloads: 2, parent_resource: @pr, cnt: {yesterday_str => {'downloads' => 5}} )
     @r2 = Fabricate(:resource, cached_downloads: 1, cached_views: 1, parent_resource: @pr)
   end
 
