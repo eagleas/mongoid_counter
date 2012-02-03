@@ -1,5 +1,4 @@
 # -*- encoding : utf-8 -*-
-require 'mongoid_counter/resource_counter'
 module Mongoid # :nodoc:
   module Counter # :nodoc:
     extend ActiveSupport::Concern
@@ -11,18 +10,10 @@ module Mongoid # :nodoc:
         self.counters_options = HashWithIndifferentAccess.new(args.extract_options!)
         self.counters = args
 
-        embeds_many :resource_counters, as: :resource
+        field :cnt, type: Hash
 
         args.each do |counter_name|
           field "cached_#{counter_name}", type: Integer
-        end
-        args.each do |field_name|
-          begin
-            ::ResourceCounter.class_eval <<-FIELDS, __FILE__, __LINE__ + 1
-            field :#{field_name}, type: Integer
-            FIELDS
-          rescue Errors::InvalidField
-          end
         end
       end
     end
@@ -31,35 +22,31 @@ module Mongoid # :nodoc:
       if counters_options["#{sym}_method"]
         inc("cached_#{sym}", increment)
       else
-        time = Time.now.utc.beginning_of_day
-        counter = resource_counters.detect {|c| c.id.generation_time >= time }
-        if counter
-          send("cached_#{sym}=", (self["cached_#{sym}"] || 0) + increment)
-          counter.send("#{sym}=", (counter[sym] || 0) + increment)
+        date = Time.now.utc.to_date.to_time.to_i.to_s
+        if cnt[date]
+          inc("cnt.#{date}.#{sym}", increment)
         else
-          send("cached_#{sym}=", (self["cached_#{sym}"] || 0) + increment)
-          #WTF? resource_counter below is available for update ONLY after parent instance is saved
-          #due to this case we can't use #inc for updating cached_column
-          resource_counters.create(sym => increment)
+          set("cnt.#{date}", {sym => increment}) # NON thread safe!
         end
-        timeless.save!(validate: false)
+        inc("cached_#{sym}", increment)
+        reload                      # <---- potentially bottleneck
       end
     end
 
     def get_count(sym, cached = true)
       if cached
-        self["cached_#{sym}".to_sym] || get_count(sym, false)
+        self[:"cached_#{sym}"] || get_count(sym, false)
       else
         fresh = \
           if method = counters_options["#{sym}_method"]
             send(method)
-        else
-          resource_counters.map(&sym).compact.reduce(:+)
-        end || 0
+          else
+            cnt.inject([]){|s, v| s << v[1][sym.to_s] }.compact.reduce(:+)
+          end || 0
         set("cached_#{sym}", fresh) if self.send("cached_#{sym}") != fresh
         fresh
       end
     end
 
-end
+  end
 end
