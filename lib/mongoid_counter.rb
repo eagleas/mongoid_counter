@@ -36,13 +36,13 @@ module Mongoid # :nodoc:
 
     def get_count(sym, cached = true)
       if cached
-        self[:"cached_#{sym}"] || get_count(sym, false)
+        self.send("cached_#{sym}") || get_count(sym, false)
       else
         fresh = \
           if method = counters_options["#{sym}_method"]
             send(method)
           else
-            cnt.inject([]){|s, v| s << v[1][sym.to_s] }.compact.reduce(:+)
+            cnt.inject(0) { |sum, e| sum + e[1][sym.to_s].to_i }
           end || 0
         set("cached_#{sym}", fresh) if self.send("cached_#{sym}") != fresh
         fresh
