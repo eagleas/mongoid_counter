@@ -5,7 +5,7 @@ describe Resource do
   before(:each) do
     yesterday_str = Time.now.utc.yesterday.to_date.to_time.to_i.to_s
     @pr = Fabricate :parent_resource
-    @r1 = Fabricate(:resource, cached_downloads: 2, parent_resource: @pr, cnt: {yesterday_str => {'downloads' => 5}} )
+    @r1 = Fabricate(:resource, cached_downloads: 2, parent_resource: @pr, cnt: {yesterday_str => {'do' => 5}} )
     @r2 = Fabricate(:resource, cached_downloads: 1, cached_views: 1, parent_resource: @pr)
   end
 
@@ -44,7 +44,7 @@ describe Resource do
 
   it "should update counter value on add_count for nested embeding" do
     @r1.add_count(:downloads)
-    @r1.cnt[Time.now.utc.to_date.to_time.to_i.to_s]['downloads'].should == 1
+    @r1.cnt[Time.now.utc.to_date.to_time.to_i.to_s]['do'].should == 1
   end
 
   it "should increase counter by 3 and create only one record" do

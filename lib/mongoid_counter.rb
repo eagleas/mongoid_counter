@@ -24,11 +24,11 @@ module Mongoid # :nodoc:
       else
         date = Time.now.utc.to_date.to_time.to_i.to_s
         if cnt[date]
-          inc("cnt.#{date}.#{sym}", increment)
-          cnt[date][sym.to_s] += increment
+          inc("cnt.#{date}.#{sym[0,2]}", increment)
+          cnt[date][sym[0,2]] += increment
         else
-          set("cnt.#{date}", {sym => increment}) # NON thread safe!
-          cnt[date] = { sym.to_s => increment }
+          set("cnt.#{date}", {sym[0,2] => increment}) # NON thread safe!
+          cnt[date] = { sym[0,2] => increment }
         end
         inc("cached_#{sym}", increment)
       end
@@ -42,7 +42,7 @@ module Mongoid # :nodoc:
           if method = counters_options["#{sym}_method"]
             send(method)
           else
-            cnt.inject(0) { |sum, e| sum + e[1][sym.to_s].to_i }
+            cnt.inject(0) { |sum, e| sum + e[1][sym[0,2]].to_i }
           end || 0
         set("cached_#{sym}", fresh) if self.send("cached_#{sym}") != fresh
         fresh
