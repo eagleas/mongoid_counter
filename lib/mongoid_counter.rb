@@ -19,9 +19,7 @@ module Mongoid # :nodoc:
     end
 
     def add_count(sym, increment = 1)
-      if counters_options["#{sym}_method"]
-        inc("cached_#{sym}", increment)
-      else
+      unless counters_options["#{sym}_method"]
         date = Time.now.utc.to_date.to_time.to_i.to_s
         if cnt[date]
           inc("cnt.#{date}.#{sym[0,2]}", increment)
@@ -30,8 +28,8 @@ module Mongoid # :nodoc:
           set("cnt.#{date}", {sym[0,2] => increment}) # NON thread safe!
           cnt[date] = { sym[0,2] => increment }
         end
-        inc("cached_#{sym}", increment)
       end
+      inc(aliased_fields["cached_#{sym}"] ||"cached_#{sym}" , increment)
     end
 
     def get_count(sym, cached = true)
@@ -44,7 +42,9 @@ module Mongoid # :nodoc:
           else
             cnt.inject(0) { |sum, e| sum + e[1][sym[0,2]].to_i }
           end || 0
-        set("cached_#{sym}", fresh) if self.send("cached_#{sym}") != fresh
+        if not fresh.zero? and self.send("cached_#{sym}") != fresh
+          set(aliased_fields["cached_#{sym}"] ||"cached_#{sym}", fresh)
+        end
         fresh
       end
     end
