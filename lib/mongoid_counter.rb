@@ -21,6 +21,7 @@ module Mongoid # :nodoc:
     def add_count(sym, increment = 1)
       unless counters_options["#{sym}_method"]
         date = Time.now.utc.to_date.to_time.to_i.to_s
+        self.cnt ||= {}
         if cnt[date]
           inc("cnt.#{date}.#{sym[0,2]}", increment)
           cnt[date][sym[0,2]] += increment

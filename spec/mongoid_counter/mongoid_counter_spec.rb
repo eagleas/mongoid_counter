@@ -7,6 +7,7 @@ describe Resource do
     @pr = Fabricate :parent_resource
     @r1 = Fabricate(:resource, cached_downloads: 2, parent_resource: @pr, cnt: {yesterday_str => {'do' => 5}} )
     @r2 = Fabricate(:resource, cached_downloads: 1, cached_views: 1, parent_resource: @pr)
+    @r3 = Fabricate(:resource, parent_resource: @pr)
   end
 
   it "should respond to counter hash" do
@@ -66,6 +67,10 @@ describe Resource do
 
   it "shoulg not add ResourceCounter" do
     expect{@r1.add_count(:views)}.to change{@r1.cnt.keys.size}.by(1)
+  end
+
+  it "should be success for resource without any counters" do
+    @r2.add_count(:blabla, 2)
   end
 
 end
